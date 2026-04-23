@@ -26,8 +26,8 @@
     "files": "arquivos"
   },
   "meta": {
-    "title": "Mapear IA - Preveja Tudo",
-    "description": "Mapear IA - Sistema de Simulação de Opiniões em Redes Sociais"
+    "title": "Mapear AI - Preveja Tudo",
+    "description": "Mapear AI - Sistema de Simulação de Opiniões em Redes Sociais"
   },
   "nav": {
     "visitGithub": "Visite nossa página no Github"
@@ -38,7 +38,7 @@
     "heroTitle1": "Envie Relatórios,",
     "heroTitle2": "Preveja o Futuro",
     "heroDesc": "A partir de um único documento, {brand} extrai sementes da realidade para gerar automaticamente um mundo paralelo com até {agentScale}. Injete variáveis com visão onisciente para encontrar a {optimalSolution} em dinâmicas de grupo complexas.",
-    "heroDescBrand": "Mapear IA",
+    "heroDescBrand": "Mapear AI",
     "heroDescAgentScale": "Agentes em escala de milhões",
     "heroDescOptimalSolution": "\"ótimo local\"",
     "slogan": "Deixe os Agentes ensaiarem o futuro, deixe as decisões prevalecerem",
@@ -75,7 +75,13 @@
     "layoutGraph": "Grafo",
     "layoutSplit": "Dividido",
     "layoutWorkbench": "Bancada",
-    "stepNames": ["Construção do Grafo", "Config. do Ambiente", "Executar Simulação", "Geração de Relatório", "Interação Profunda"]
+    "stepNames": [
+      "Construção do Grafo",
+      "Config. do Ambiente",
+      "Executar Simulação",
+      "Geração de Relatório",
+      "Interação Profunda"
+    ]
   },
   "step1": {
     "ontologyGeneration": "Geração de Ontologia",

@@ -3,19 +3,25 @@
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="brand" @click="router.push('/')">MIROFISH</div>
+        <div class="brand" @click="router.push('/')">Mapear AI</div>
       </div>
-      
+
       <div class="header-center">
         <div class="view-switcher">
-          <button 
-            v-for="mode in ['graph', 'split', 'workbench']" 
+          <button
+            v-for="mode in ['graph', 'split', 'workbench']"
             :key="mode"
             class="switch-btn"
             :class="{ active: viewMode === mode }"
             @click="viewMode = mode"
           >
-            {{ { graph: $t('main.layoutGraph'), split: $t('main.layoutSplit'), workbench: $t('main.layoutWorkbench') }[mode] }}
+            {{
+              {
+                graph: $t("main.layoutGraph"),
+                split: $t("main.layoutSplit"),
+                workbench: $t("main.layoutWorkbench"),
+              }[mode]
+            }}
           </button>
         </div>
       </div>
@@ -25,7 +31,7 @@
         <div class="step-divider"></div>
         <div class="workflow-step">
           <span class="step-num">Step 2/5</span>
-          <span class="step-name">{{ $tm('main.stepNames')[1] }}</span>
+          <span class="step-name">{{ $tm("main.stepNames")[1] }}</span>
         </div>
         <div class="step-divider"></div>
         <span class="status-indicator" :class="statusClass">
@@ -39,7 +45,7 @@
     <main class="content-area">
       <!-- Left Panel: Graph -->
       <div class="panel-wrapper left" :style="leftPanelStyle">
-        <GraphPanel 
+        <GraphPanel
           :graphData="graphData"
           :loading="graphLoading"
           :currentPhase="2"
@@ -66,114 +72,134 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import GraphPanel from '../components/GraphPanel.vue'
-import Step2EnvSetup from '../components/Step2EnvSetup.vue'
-import { getProject, getGraphData } from '../api/graph'
-import { getSimulation, stopSimulation, getEnvStatus, closeSimulationEnv } from '../api/simulation'
-import LanguageSwitcher from '../components/LanguageSwitcher.vue'
-import { useI18n } from 'vue-i18n'
+import { ref, computed, onMounted, onUnmounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import GraphPanel from "../components/GraphPanel.vue";
+import Step2EnvSetup from "../components/Step2EnvSetup.vue";
+import { getProject, getGraphData } from "../api/graph";
+import {
+  getSimulation,
+  stopSimulation,
+  getEnvStatus,
+  closeSimulationEnv,
+} from "../api/simulation";
+import LanguageSwitcher from "../components/LanguageSwitcher.vue";
+import { useI18n } from "vue-i18n";
 
-const { t } = useI18n()
-const route = useRoute()
-const router = useRouter()
+const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
 
 // Props
 const props = defineProps({
-  simulationId: String
-})
+  simulationId: String,
+});
 
 // Layout State
-const viewMode = ref('split')
+const viewMode = ref("split");
 
 // Data State
-const currentSimulationId = ref(route.params.simulationId)
-const projectData = ref(null)
-const graphData = ref(null)
-const graphLoading = ref(false)
-const systemLogs = ref([])
-const currentStatus = ref('processing') // processing | completed | error
+const currentSimulationId = ref(route.params.simulationId);
+const projectData = ref(null);
+const graphData = ref(null);
+const graphLoading = ref(false);
+const systemLogs = ref([]);
+const currentStatus = ref("processing"); // processing | completed | error
 
 // --- Computed Layout Styles ---
 const leftPanelStyle = computed(() => {
-  if (viewMode.value === 'graph') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
-  if (viewMode.value === 'workbench') return { width: '0%', opacity: 0, transform: 'translateX(-20px)' }
-  return { width: '50%', opacity: 1, transform: 'translateX(0)' }
-})
+  if (viewMode.value === "graph")
+    return { width: "100%", opacity: 1, transform: "translateX(0)" };
+  if (viewMode.value === "workbench")
+    return { width: "0%", opacity: 0, transform: "translateX(-20px)" };
+  return { width: "50%", opacity: 1, transform: "translateX(0)" };
+});
 
 const rightPanelStyle = computed(() => {
-  if (viewMode.value === 'workbench') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
-  if (viewMode.value === 'graph') return { width: '0%', opacity: 0, transform: 'translateX(20px)' }
-  return { width: '50%', opacity: 1, transform: 'translateX(0)' }
-})
+  if (viewMode.value === "workbench")
+    return { width: "100%", opacity: 1, transform: "translateX(0)" };
+  if (viewMode.value === "graph")
+    return { width: "0%", opacity: 0, transform: "translateX(20px)" };
+  return { width: "50%", opacity: 1, transform: "translateX(0)" };
+});
 
 // --- Status Computed ---
 const statusClass = computed(() => {
-  return currentStatus.value
-})
+  return currentStatus.value;
+});
 
 const statusText = computed(() => {
-  if (currentStatus.value === 'error') return 'Error'
-  if (currentStatus.value === 'completed') return 'Ready'
-  return 'Preparing'
-})
+  if (currentStatus.value === "error") return "Error";
+  if (currentStatus.value === "completed") return "Ready";
+  return "Preparing";
+});
 
 // --- Helpers ---
 const addLog = (msg) => {
-  const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '.' + new Date().getMilliseconds().toString().padStart(3, '0')
-  systemLogs.value.push({ time, msg })
+  const time =
+    new Date().toLocaleTimeString("en-US", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }) +
+    "." +
+    new Date().getMilliseconds().toString().padStart(3, "0");
+  systemLogs.value.push({ time, msg });
   if (systemLogs.value.length > 100) {
-    systemLogs.value.shift()
+    systemLogs.value.shift();
   }
-}
+};
 
 const updateStatus = (status) => {
-  currentStatus.value = status
-}
+  currentStatus.value = status;
+};
 
 // --- Layout Methods ---
 const toggleMaximize = (target) => {
   if (viewMode.value === target) {
-    viewMode.value = 'split'
+    viewMode.value = "split";
   } else {
-    viewMode.value = target
+    viewMode.value = target;
   }
-}
+};
 
 const handleGoBack = () => {
   // 返回到 process 页面
   if (projectData.value?.project_id) {
-    router.push({ name: 'Process', params: { projectId: projectData.value.project_id } })
+    router.push({
+      name: "Process",
+      params: { projectId: projectData.value.project_id },
+    });
   } else {
-    router.push('/')
+    router.push("/");
   }
-}
+};
 
 const handleNextStep = (params = {}) => {
-  addLog(t('log.enterStep3'))
+  addLog(t("log.enterStep3"));
 
   // 记录模拟轮数配置
   if (params.maxRounds) {
-    addLog(t('log.customRoundsConfig', { rounds: params.maxRounds }))
+    addLog(t("log.customRoundsConfig", { rounds: params.maxRounds }));
   } else {
-    addLog(t('log.useAutoRounds'))
+    addLog(t("log.useAutoRounds"));
   }
-  
+
   // 构建路由参数
   const routeParams = {
-    name: 'SimulationRun',
-    params: { simulationId: currentSimulationId.value }
-  }
-  
+    name: "SimulationRun",
+    params: { simulationId: currentSimulationId.value },
+  };
+
   // 如果有自定义轮数，通过 query 参数传递
   if (params.maxRounds) {
-    routeParams.query = { maxRounds: params.maxRounds }
+    routeParams.query = { maxRounds: params.maxRounds };
   }
-  
+
   // 跳转到 Step 3 页面
-  router.push(routeParams)
-}
+  router.push(routeParams);
+};
 
 // --- Data Logic ---
 
@@ -182,124 +208,140 @@ const handleNextStep = (params = {}) => {
  * 当用户从 Step 3 返回到 Step 2 时，默认用户要退出模拟
  */
 const checkAndStopRunningSimulation = async () => {
-  if (!currentSimulationId.value) return
-  
+  if (!currentSimulationId.value) return;
+
   try {
     // 先检查模拟环境是否存活
-    const envStatusRes = await getEnvStatus({ simulation_id: currentSimulationId.value })
-    
+    const envStatusRes = await getEnvStatus({
+      simulation_id: currentSimulationId.value,
+    });
+
     if (envStatusRes.success && envStatusRes.data?.env_alive) {
-      addLog(t('log.detectedSimEnvRunning'))
-      
+      addLog(t("log.detectedSimEnvRunning"));
+
       // 尝试优雅关闭模拟环境
       try {
-        const closeRes = await closeSimulationEnv({ 
+        const closeRes = await closeSimulationEnv({
           simulation_id: currentSimulationId.value,
-          timeout: 10  // 10秒超时
-        })
-        
+          timeout: 10, // 10秒超时
+        });
+
         if (closeRes.success) {
-          addLog(t('log.simEnvClosed'))
+          addLog(t("log.simEnvClosed"));
         } else {
-          addLog(t('log.closeSimEnvFailedWithError', { error: closeRes.error || t('common.unknownError') }))
+          addLog(
+            t("log.closeSimEnvFailedWithError", {
+              error: closeRes.error || t("common.unknownError"),
+            }),
+          );
           // 如果优雅关闭失败，尝试强制停止
-          await forceStopSimulation()
+          await forceStopSimulation();
         }
       } catch (closeErr) {
-        addLog(t('log.closeSimEnvException', { error: closeErr.message }))
+        addLog(t("log.closeSimEnvException", { error: closeErr.message }));
         // 如果优雅关闭异常，尝试强制停止
-        await forceStopSimulation()
+        await forceStopSimulation();
       }
     } else {
       // 环境未运行，但可能进程还在，检查模拟状态
-      const simRes = await getSimulation(currentSimulationId.value)
-      if (simRes.success && simRes.data?.status === 'running') {
-        addLog(t('log.detectedSimRunning'))
-        await forceStopSimulation()
+      const simRes = await getSimulation(currentSimulationId.value);
+      if (simRes.success && simRes.data?.status === "running") {
+        addLog(t("log.detectedSimRunning"));
+        await forceStopSimulation();
       }
     }
   } catch (err) {
     // 检查环境状态失败不影响后续流程
-    console.warn('检查模拟状态失败:', err)
+    console.warn("检查模拟状态失败:", err);
   }
-}
+};
 
 /**
  * 强制停止模拟
  */
 const forceStopSimulation = async () => {
   try {
-    const stopRes = await stopSimulation({ simulation_id: currentSimulationId.value })
+    const stopRes = await stopSimulation({
+      simulation_id: currentSimulationId.value,
+    });
     if (stopRes.success) {
-      addLog(t('log.simForceStopSuccess'))
+      addLog(t("log.simForceStopSuccess"));
     } else {
-      addLog(t('log.forceStopSimFailed', { error: stopRes.error || t('common.unknownError') }))
+      addLog(
+        t("log.forceStopSimFailed", {
+          error: stopRes.error || t("common.unknownError"),
+        }),
+      );
     }
   } catch (err) {
-    addLog(t('log.forceStopSimException', { error: err.message }))
+    addLog(t("log.forceStopSimException", { error: err.message }));
   }
-}
+};
 
 const loadSimulationData = async () => {
   try {
-    addLog(t('log.loadingSimData', { id: currentSimulationId.value }))
+    addLog(t("log.loadingSimData", { id: currentSimulationId.value }));
 
     // 获取 simulation 信息
-    const simRes = await getSimulation(currentSimulationId.value)
+    const simRes = await getSimulation(currentSimulationId.value);
     if (simRes.success && simRes.data) {
-      const simData = simRes.data
+      const simData = simRes.data;
 
       // 获取 project 信息
       if (simData.project_id) {
-        const projRes = await getProject(simData.project_id)
+        const projRes = await getProject(simData.project_id);
         if (projRes.success && projRes.data) {
-          projectData.value = projRes.data
-          addLog(t('log.projectLoadSuccess', { id: projRes.data.project_id }))
-          
+          projectData.value = projRes.data;
+          addLog(t("log.projectLoadSuccess", { id: projRes.data.project_id }));
+
           // 获取 graph 数据
           if (projRes.data.graph_id) {
-            await loadGraph(projRes.data.graph_id)
+            await loadGraph(projRes.data.graph_id);
           }
         }
       }
     } else {
-      addLog(t('log.loadSimDataFailed', { error: simRes.error || t('common.unknownError') }))
+      addLog(
+        t("log.loadSimDataFailed", {
+          error: simRes.error || t("common.unknownError"),
+        }),
+      );
     }
   } catch (err) {
-    addLog(t('log.loadException', { error: err.message }))
+    addLog(t("log.loadException", { error: err.message }));
   }
-}
+};
 
 const loadGraph = async (graphId) => {
-  graphLoading.value = true
+  graphLoading.value = true;
   try {
-    const res = await getGraphData(graphId)
+    const res = await getGraphData(graphId);
     if (res.success) {
-      graphData.value = res.data
-      addLog(t('log.graphDataLoadSuccess'))
+      graphData.value = res.data;
+      addLog(t("log.graphDataLoadSuccess"));
     }
   } catch (err) {
-    addLog(t('log.graphLoadFailed', { error: err.message }))
+    addLog(t("log.graphLoadFailed", { error: err.message }));
   } finally {
-    graphLoading.value = false
+    graphLoading.value = false;
   }
-}
+};
 
 const refreshGraph = () => {
   if (projectData.value?.graph_id) {
-    loadGraph(projectData.value.graph_id)
+    loadGraph(projectData.value.graph_id);
   }
-}
+};
 
 onMounted(async () => {
-  addLog(t('log.simViewInit'))
-  
+  addLog(t("log.simViewInit"));
+
   // 检查并关闭正在运行的模拟（用户从 Step 3 返回时）
-  await checkAndStopRunningSimulation()
-  
+  await checkAndStopRunningSimulation();
+
   // 加载模拟数据
-  loadSimulationData()
-})
+  loadSimulationData();
+});
 </script>
 
 <style scoped>
@@ -307,26 +349,26 @@ onMounted(async () => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #FFF;
+  background: #fff;
   overflow: hidden;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: "Space Grotesk", "Noto Sans SC", system-ui, sans-serif;
 }
 
 /* Header */
 .app-header {
   height: 60px;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid #eaeaea;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: #FFF;
+  background: #fff;
   z-index: 100;
   position: relative;
 }
 
 .brand {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-weight: 800;
   font-size: 18px;
   letter-spacing: 1px;
@@ -341,7 +383,7 @@ onMounted(async () => {
 
 .view-switcher {
   display: flex;
-  background: #F5F5F5;
+  background: #f5f5f5;
   padding: 4px;
   border-radius: 6px;
   gap: 4px;
@@ -360,9 +402,9 @@ onMounted(async () => {
 }
 
 .switch-btn.active {
-  background: #FFF;
+  background: #fff;
   color: #000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .header-right {
@@ -379,7 +421,7 @@ onMounted(async () => {
 }
 
 .step-num {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-weight: 700;
   color: #999;
 }
@@ -392,7 +434,7 @@ onMounted(async () => {
 .step-divider {
   width: 1px;
   height: 14px;
-  background-color: #E0E0E0;
+  background-color: #e0e0e0;
 }
 
 .status-indicator {
@@ -408,14 +450,25 @@ onMounted(async () => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #CCC;
+  background: #ccc;
 }
 
-.status-indicator.processing .dot { background: #FF5722; animation: pulse 1s infinite; }
-.status-indicator.completed .dot { background: #4CAF50; }
-.status-indicator.error .dot { background: #F44336; }
+.status-indicator.processing .dot {
+  background: #ff5722;
+  animation: pulse 1s infinite;
+}
+.status-indicator.completed .dot {
+  background: #4caf50;
+}
+.status-indicator.error .dot {
+  background: #f44336;
+}
 
-@keyframes pulse { 50% { opacity: 0.5; } }
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
 
 /* Content */
 .content-area {
@@ -428,12 +481,14 @@ onMounted(async () => {
 .panel-wrapper {
   height: 100%;
   overflow: hidden;
-  transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+    opacity 0.3s ease,
+    transform 0.3s ease;
   will-change: width, opacity, transform;
 }
 
 .panel-wrapper.left {
-  border-right: 1px solid #EAEAEA;
+  border-right: 1px solid #eaeaea;
 }
 </style>
-

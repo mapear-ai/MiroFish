@@ -3,19 +3,25 @@
     <!-- Header -->
     <header class="app-header">
       <div class="header-left">
-        <div class="brand" @click="router.push('/')">MIROFISH</div>
+        <div class="brand" @click="router.push('/')">Mapear AI</div>
       </div>
-      
+
       <div class="header-center">
         <div class="view-switcher">
-          <button 
-            v-for="mode in ['graph', 'split', 'workbench']" 
+          <button
+            v-for="mode in ['graph', 'split', 'workbench']"
             :key="mode"
             class="switch-btn"
             :class="{ active: viewMode === mode }"
             @click="viewMode = mode"
           >
-            {{ { graph: $t('main.layoutGraph'), split: $t('main.layoutSplit'), workbench: $t('main.layoutWorkbench') }[mode] }}
+            {{
+              {
+                graph: $t("main.layoutGraph"),
+                split: $t("main.layoutSplit"),
+                workbench: $t("main.layoutWorkbench"),
+              }[mode]
+            }}
           </button>
         </div>
       </div>
@@ -25,7 +31,7 @@
         <div class="step-divider"></div>
         <div class="workflow-step">
           <span class="step-num">Step 5/5</span>
-          <span class="step-name">{{ $tm('main.stepNames')[4] }}</span>
+          <span class="step-name">{{ $tm("main.stepNames")[4] }}</span>
         </div>
         <div class="step-divider"></div>
         <span class="status-indicator" :class="statusClass">
@@ -39,7 +45,7 @@
     <main class="content-area">
       <!-- Left Panel: Graph -->
       <div class="panel-wrapper left" :style="leftPanelStyle">
-        <GraphPanel 
+        <GraphPanel
           :graphData="graphData"
           :loading="graphLoading"
           :currentPhase="5"
@@ -64,158 +70,180 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import GraphPanel from '../components/GraphPanel.vue'
-import Step5Interaction from '../components/Step5Interaction.vue'
-import { getProject, getGraphData } from '../api/graph'
-import { getSimulation } from '../api/simulation'
-import { getReport } from '../api/report'
-import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import { ref, computed, onMounted, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import GraphPanel from "../components/GraphPanel.vue";
+import Step5Interaction from "../components/Step5Interaction.vue";
+import { getProject, getGraphData } from "../api/graph";
+import { getSimulation } from "../api/simulation";
+import { getReport } from "../api/report";
+import LanguageSwitcher from "../components/LanguageSwitcher.vue";
 
-const route = useRoute()
-const router = useRouter()
-const { t } = useI18n()
+const route = useRoute();
+const router = useRouter();
+const { t } = useI18n();
 
 // Props
 const props = defineProps({
-  reportId: String
-})
+  reportId: String,
+});
 
 // Layout State - 默认切换到工作台视角
-const viewMode = ref('workbench')
+const viewMode = ref("workbench");
 
 // Data State
-const currentReportId = ref(route.params.reportId)
-const simulationId = ref(null)
-const projectData = ref(null)
-const graphData = ref(null)
-const graphLoading = ref(false)
-const systemLogs = ref([])
-const currentStatus = ref('ready') // ready | processing | completed | error
+const currentReportId = ref(route.params.reportId);
+const simulationId = ref(null);
+const projectData = ref(null);
+const graphData = ref(null);
+const graphLoading = ref(false);
+const systemLogs = ref([]);
+const currentStatus = ref("ready"); // ready | processing | completed | error
 
 // --- Computed Layout Styles ---
 const leftPanelStyle = computed(() => {
-  if (viewMode.value === 'graph') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
-  if (viewMode.value === 'workbench') return { width: '0%', opacity: 0, transform: 'translateX(-20px)' }
-  return { width: '50%', opacity: 1, transform: 'translateX(0)' }
-})
+  if (viewMode.value === "graph")
+    return { width: "100%", opacity: 1, transform: "translateX(0)" };
+  if (viewMode.value === "workbench")
+    return { width: "0%", opacity: 0, transform: "translateX(-20px)" };
+  return { width: "50%", opacity: 1, transform: "translateX(0)" };
+});
 
 const rightPanelStyle = computed(() => {
-  if (viewMode.value === 'workbench') return { width: '100%', opacity: 1, transform: 'translateX(0)' }
-  if (viewMode.value === 'graph') return { width: '0%', opacity: 0, transform: 'translateX(20px)' }
-  return { width: '50%', opacity: 1, transform: 'translateX(0)' }
-})
+  if (viewMode.value === "workbench")
+    return { width: "100%", opacity: 1, transform: "translateX(0)" };
+  if (viewMode.value === "graph")
+    return { width: "0%", opacity: 0, transform: "translateX(20px)" };
+  return { width: "50%", opacity: 1, transform: "translateX(0)" };
+});
 
 // --- Status Computed ---
 const statusClass = computed(() => {
-  return currentStatus.value
-})
+  return currentStatus.value;
+});
 
 const statusText = computed(() => {
-  if (currentStatus.value === 'error') return 'Error'
-  if (currentStatus.value === 'completed') return 'Completed'
-  if (currentStatus.value === 'processing') return 'Processing'
-  return 'Ready'
-})
+  if (currentStatus.value === "error") return "Error";
+  if (currentStatus.value === "completed") return "Completed";
+  if (currentStatus.value === "processing") return "Processing";
+  return "Ready";
+});
 
 // --- Helpers ---
 const addLog = (msg) => {
-  const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }) + '.' + new Date().getMilliseconds().toString().padStart(3, '0')
-  systemLogs.value.push({ time, msg })
+  const time =
+    new Date().toLocaleTimeString("en-US", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }) +
+    "." +
+    new Date().getMilliseconds().toString().padStart(3, "0");
+  systemLogs.value.push({ time, msg });
   if (systemLogs.value.length > 200) {
-    systemLogs.value.shift()
+    systemLogs.value.shift();
   }
-}
+};
 
 const updateStatus = (status) => {
-  currentStatus.value = status
-}
+  currentStatus.value = status;
+};
 
 // --- Layout Methods ---
 const toggleMaximize = (target) => {
   if (viewMode.value === target) {
-    viewMode.value = 'split'
+    viewMode.value = "split";
   } else {
-    viewMode.value = target
+    viewMode.value = target;
   }
-}
+};
 
 // --- Data Logic ---
 const loadReportData = async () => {
   try {
-    addLog(t('log.loadReportData', { id: currentReportId.value }))
+    addLog(t("log.loadReportData", { id: currentReportId.value }));
 
     // 获取 report 信息以获取 simulation_id
-    const reportRes = await getReport(currentReportId.value)
+    const reportRes = await getReport(currentReportId.value);
     if (reportRes.success && reportRes.data) {
-      const reportData = reportRes.data
-      simulationId.value = reportData.simulation_id
+      const reportData = reportRes.data;
+      simulationId.value = reportData.simulation_id;
 
       if (simulationId.value) {
         // 获取 simulation 信息
-        const simRes = await getSimulation(simulationId.value)
+        const simRes = await getSimulation(simulationId.value);
         if (simRes.success && simRes.data) {
-          const simData = simRes.data
+          const simData = simRes.data;
 
           // 获取 project 信息
           if (simData.project_id) {
-            const projRes = await getProject(simData.project_id)
+            const projRes = await getProject(simData.project_id);
             if (projRes.success && projRes.data) {
-              projectData.value = projRes.data
-              addLog(t('log.projectLoadSuccess', { id: projRes.data.project_id }))
+              projectData.value = projRes.data;
+              addLog(
+                t("log.projectLoadSuccess", { id: projRes.data.project_id }),
+              );
 
               // 获取 graph 数据
               if (projRes.data.graph_id) {
-                await loadGraph(projRes.data.graph_id)
+                await loadGraph(projRes.data.graph_id);
               }
             }
           }
         }
       }
     } else {
-      addLog(t('log.getReportInfoFailed', { error: reportRes.error || t('common.unknownError') }))
+      addLog(
+        t("log.getReportInfoFailed", {
+          error: reportRes.error || t("common.unknownError"),
+        }),
+      );
     }
   } catch (err) {
-    addLog(t('log.loadException', { error: err.message }))
+    addLog(t("log.loadException", { error: err.message }));
   }
-}
+};
 
 const loadGraph = async (graphId) => {
-  graphLoading.value = true
-  
+  graphLoading.value = true;
+
   try {
-    const res = await getGraphData(graphId)
+    const res = await getGraphData(graphId);
     if (res.success) {
-      graphData.value = res.data
-      addLog(t('log.graphDataLoadSuccess'))
+      graphData.value = res.data;
+      addLog(t("log.graphDataLoadSuccess"));
     }
   } catch (err) {
-    addLog(t('log.graphLoadFailed', { error: err.message }))
+    addLog(t("log.graphLoadFailed", { error: err.message }));
   } finally {
-    graphLoading.value = false
+    graphLoading.value = false;
   }
-}
+};
 
 const refreshGraph = () => {
   if (projectData.value?.graph_id) {
-    loadGraph(projectData.value.graph_id)
+    loadGraph(projectData.value.graph_id);
   }
-}
+};
 
 // Watch route params
-watch(() => route.params.reportId, (newId) => {
-  if (newId && newId !== currentReportId.value) {
-    currentReportId.value = newId
-    loadReportData()
-  }
-}, { immediate: true })
+watch(
+  () => route.params.reportId,
+  (newId) => {
+    if (newId && newId !== currentReportId.value) {
+      currentReportId.value = newId;
+      loadReportData();
+    }
+  },
+  { immediate: true },
+);
 
 onMounted(() => {
-  addLog(t('log.interactionViewInit'))
-  loadReportData()
-})
+  addLog(t("log.interactionViewInit"));
+  loadReportData();
+});
 </script>
 
 <style scoped>
@@ -223,20 +251,20 @@ onMounted(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #FFF;
+  background: #fff;
   overflow: hidden;
-  font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+  font-family: "Space Grotesk", "Noto Sans SC", system-ui, sans-serif;
 }
 
 /* Header */
 .app-header {
   height: 60px;
-  border-bottom: 1px solid #EAEAEA;
+  border-bottom: 1px solid #eaeaea;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: #FFF;
+  background: #fff;
   z-index: 100;
   position: relative;
 }
@@ -248,7 +276,7 @@ onMounted(() => {
 }
 
 .brand {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-weight: 800;
   font-size: 18px;
   letter-spacing: 1px;
@@ -257,7 +285,7 @@ onMounted(() => {
 
 .view-switcher {
   display: flex;
-  background: #F5F5F5;
+  background: #f5f5f5;
   padding: 4px;
   border-radius: 6px;
   gap: 4px;
@@ -276,9 +304,9 @@ onMounted(() => {
 }
 
 .switch-btn.active {
-  background: #FFF;
+  background: #fff;
   color: #000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .header-right {
@@ -295,7 +323,7 @@ onMounted(() => {
 }
 
 .step-num {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-weight: 700;
   color: #999;
 }
@@ -308,7 +336,7 @@ onMounted(() => {
 .step-divider {
   width: 1px;
   height: 14px;
-  background-color: #E0E0E0;
+  background-color: #e0e0e0;
 }
 
 .status-indicator {
@@ -324,15 +352,28 @@ onMounted(() => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #CCC;
+  background: #ccc;
 }
 
-.status-indicator.ready .dot { background: #4CAF50; }
-.status-indicator.processing .dot { background: #FF9800; animation: pulse 1s infinite; }
-.status-indicator.completed .dot { background: #4CAF50; }
-.status-indicator.error .dot { background: #F44336; }
+.status-indicator.ready .dot {
+  background: #4caf50;
+}
+.status-indicator.processing .dot {
+  background: #ff9800;
+  animation: pulse 1s infinite;
+}
+.status-indicator.completed .dot {
+  background: #4caf50;
+}
+.status-indicator.error .dot {
+  background: #f44336;
+}
 
-@keyframes pulse { 50% { opacity: 0.5; } }
+@keyframes pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
 
 /* Content */
 .content-area {
@@ -345,11 +386,14 @@ onMounted(() => {
 .panel-wrapper {
   height: 100%;
   overflow: hidden;
-  transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1),
+    opacity 0.3s ease,
+    transform 0.3s ease;
   will-change: width, opacity, transform;
 }
 
 .panel-wrapper.left {
-  border-right: 1px solid #EAEAEA;
+  border-right: 1px solid #eaeaea;
 }
 </style>
